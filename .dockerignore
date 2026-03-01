@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Node modules (will be installed in container)
+node_modules/
+.bun/
+
+# Build artifacts
+out/
+cache/
+broadcast/
+
+# Environment files (will be mounted as volume)
+.env
+.env.*
+!.env.example
+
+# Output files
+output/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Foundry cache
+.foundry/
+lib/cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
