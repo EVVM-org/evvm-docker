@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   evvm-cli:
     build:
@@ -8,16 +6,19 @@ services:
     image: evvm/testnet-contracts:latest
     container_name: evvm-cli
     
-    # Mount your .env file (create it in the same directory as docker-compose.yml)
+    # Mount your .env file (create it in the same directory as compose.yml)
     volumes:
       # Mount .env file for configuration (place it in this directory)
       - ./.env:/workspace/.env:ro
       
-      # Optional: Mount output directory to persist deployment results
+      # Persist deployment results
       - ./output:/workspace/output
       
-      # Optional: Mount Foundry keystore for wallet access
-      # Uncomment if you want to use cast wallet import from host
+      # Persist Foundry keystores (wallets) between container runs
+      - foundry-keystores:/root/.foundry/keystores
+      
+      # Optional: Mount host keystore for wallet access (alternative to above)
+      # Uncomment if you want to use wallets from your host machine
       # - ~/.foundry/keystores:/root/.foundry/keystores:ro
     
     # Interactive mode
@@ -31,9 +32,10 @@ services:
     environment:
       - TERM=xterm-256color
     
-    # Override default command to get an interactive shell
-    # Uncomment to start with bash instead of the CLI help
-    # command: /bin/bash
+    # Override entrypoint to get an interactive shell
+    # Uncomment to start with bash instead of the CLI
+    # entrypoint: /bin/bash
+    # command: []
 
 # Optional: Add a local Ethereum node for testing
   # anvil:
@@ -43,3 +45,8 @@ services:
   #     - "8545:8545"
   #   command: anvil --host 0.0.0.0
   #   network_mode: bridge
+
+# Named volumes for data persistence
+volumes:
+  foundry-keystores:
+    driver: local

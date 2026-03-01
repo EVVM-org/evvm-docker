@@ -43,7 +43,7 @@ nano .env
 ### 3. Build Docker Image
 
 ```bash
-docker-compose build
+docker compose build
 ```
 
 Or using Make:
@@ -56,7 +56,7 @@ make build
 
 ```bash
 # Start interactive session
-docker-compose run --rm evvm-cli /bin/bash
+docker compose run --rm --entrypoint /bin/bash evvm-cli
 
 # Inside container, import your wallet
 cast wallet import defaultKey --interactive
@@ -67,8 +67,8 @@ exit
 ### 5. Deploy EVVM
 
 ```bash
-# Using docker-compose
-docker-compose run --rm evvm-cli deploy
+# Using docker compose
+docker compose run --rm evvm-cli deploy
 
 # Or using Make
 make deploy
@@ -81,7 +81,7 @@ evvm-docker/
 ├── 📄 README.md              # This file
 ├── 📄 QUICKSTART.md          # Quick start guide
 ├── 🐳 Dockerfile             # Docker image definition
-├── 🐳 docker-compose.yml     # Docker Compose configuration
+├── 🐳 compose.yml            # Docker Compose configuration
 ├── 📝 .env.example           # Environment variables template
 ├── 🔧 Makefile               # Make commands (optional)
 ├── 📄 LICENSE                # MIT License
@@ -107,11 +107,13 @@ Perfect for:
 
 ## Working with Wallets
 
-### Option 1: Import wallet inside container
+### Option 1: Import wallet inside container (Persistent)
+
+Wallets are automatically persisted in a Docker volume, so you only need to import once:
 
 ```bash
-# Start interactive session
-docker-compose run --rm evvm-cli /bin/bash
+# Start interactive session (only needed once for import)
+docker compose run --rm --entrypoint /bin/bash evvm-cli
 
 # Inside container, import your wallet
 cast wallet import defaultKey --interactive
@@ -122,14 +124,20 @@ bun run cli/index.ts deploy
 exit
 ```
 
-**Note:** Wallet will be lost when container is removed unless you mount the keystore directory.
+**Note:** Your wallet will persist across container runs thanks to the `foundry-keystores` volume.
 
 ### Option 2: Share Foundry keystore from host (Recommended for persistence)
 
-Uncomment the volume in `docker-compose.yml`:
+**Note:** By default, wallets are now persisted in a Docker volume named `foundry-keystores`. They will be available across all container runs.
+
+If you want to share wallets with your host machine instead, uncomment the alternative volume mount in `compose.yml`:
 
 ```yaml
 volumes:
+  # Comment out the volume mount
+  # - foundry-keystores:/root/.foundry/keystores
+  
+  # Uncomment the host mount
   - ~/.foundry/keystores:/root/.foundry/keystores:ro
 ```
 
@@ -139,7 +147,7 @@ Then import wallet on your host machine:
 cast wallet import defaultKey --interactive
 ```
 
-Your wallet will now be available in all container runs.
+Your wallet will now be available in all container runs from both host and containers.
 
 ## Environment Variables
 
@@ -164,29 +172,32 @@ See `.env.example` for all available options.
 
 ## Available Commands
 
-### Using docker-compose (Recommended)
+### Using Docker Compose (Recommended)
 
 ```bash
-docker-compose run --rm evvm-cli help                       # Show CLI help
-docker-compose run --rm evvm-cli version                    # Display version
-docker-compose run --rm evvm-cli deploy                     # Deploy EVVM
-docker-compose run --rm evvm-cli register                   # Register EVVM
-docker-compose run --rm evvm-cli setUpCrossChainTreasuries  # Setup cross-chain
-docker-compose run --rm evvm-cli dev                        # Developer utilities
-docker-compose run --rm evvm-cli install                    # Install dependencies
-docker-compose run --rm evvm-cli /bin/bash                  # Interactive shell
+docker compose run --rm evvm-cli help                       # Show CLI help
+docker compose run --rm evvm-cli version                    # Display version
+docker compose run --rm evvm-cli deploy                     # Deploy EVVM
+docker compose run --rm evvm-cli register                   # Register EVVM
+docker compose run --rm evvm-cli setUpCrossChainTreasuries  # Setup cross-chain
+docker compose run --rm evvm-cli dev                        # Developer utilities
+docker compose run --rm evvm-cli install                    # Install dependencies
+docker compose run --rm --entrypoint /bin/bash evvm-cli     # Interactive shell
 ```
 
 ### Using Make (Optional)
 
 ```bash
-make help       # Show all available commands
-make build      # Build Docker image
-make deploy     # Deploy EVVM
-make register   # Register EVVM
-make shell      # Interactive shell
-make version    # Show version
-make clean      # Remove containers and images
+make help          # Show all available commands
+make build         # Build Docker image
+make deploy        # Deploy EVVM
+make register      # Register EVVM
+make shell         # Interactive shell
+make version       # Show version
+make stop          # Stop containers (keep data)
+make clean-image   # Remove image only (keep wallets/data)
+make clean         # Remove everything (images + wallets + data)
+make clean-wallets # Remove only saved wallets
 ```
 
 ## Examples
@@ -198,7 +209,7 @@ make clean      # Remove containers and images
 echo 'RPC_URL="https://sepolia-rollup.arbitrum.io/rpc"' > .env
 
 # 2. Run deployment
-docker-compose run --rm evvm-cli deploy
+docker compose run --rm evvm-cli deploy
 ```
 
 ### Deploy cross-chain EVVM
@@ -211,7 +222,7 @@ HOST_RPC_URL="https://0xrpc.io/sep"
 EOF
 
 # 2. Run deployment
-docker-compose run --rm evvm-cli deploy
+docker compose run --rm evvm-cli deploy
 ```
 
 ### Register EVVM in the registry
@@ -222,23 +233,23 @@ docker-compose run --rm evvm-cli deploy
 echo 'EVVM_REGISTRATION_RPC_URL="https://gateway.tenderly.co/public/sepolia"' >> .env
 
 # 3. Run registration
-docker-compose run --rm evvm-cli register
+docker compose run --rm evvm-cli register
 ```
 
 ### Run Foundry commands
 
 ```bash
 # Compile contracts
-docker-compose run --rm evvm-cli forge build
+docker compose run --rm evvm-cli forge build
 
 # Run tests
-docker-compose run --rm evvm-cli forge test
+docker compose run --rm evvm-cli forge test
 
 # Start local testnet (Anvil)
-docker-compose run --rm -p 8545:8545 evvm-cli anvil --host 0.0.0.0
+docker compose run --rm -p 8545:8545 evvm-cli anvil --host 0.0.0.0
 
 # Use cast to check block number
-docker-compose run --rm evvm-cli cast block-number --rpc-url https://eth.llamarpc.com
+docker compose run --rm evvm-cli cast block-number --rpc-url https://eth.llamarpc.com
 ```
 
 ## Persisting Data
@@ -262,20 +273,20 @@ If you import a wallet inside the container without mounting the keystore direct
 
 ```bash
 # Run forge tests
-docker-compose run --rm evvm-cli forge test
+docker compose run --rm evvm-cli forge test
 
 # Run anvil (local testnet)
-docker-compose run --rm -p 8545:8545 evvm-cli anvil --host 0.0.0.0
+docker compose run --rm -p 8545:8545 evvm-cli anvil --host 0.0.0.0
 
 # Use cast
-docker-compose run --rm evvm-cli cast block-number --rpc-url https://eth.llamarpc.com
+docker compose run --rm evvm-cli cast block-number --rpc-url https://eth.llamarpc.com
 ```
 
 ### Development mode
 
 For development with live code changes, mount the source directory:
 
-Edit `docker-compose.yml`:
+Edit `compose.yml`:
 
 ```yaml
 volumes:
@@ -285,12 +296,72 @@ volumes:
 Then rebuild inside container:
 
 ```bash
-docker-compose run --rm evvm-cli /bin/bash
+docker compose run --rm --entrypoint /bin/bash evvm-cli
 bun install
 forge build
 ```
 
 ## Troubleshooting
+
+### Stop containers and remove everything
+
+To pause or completely remove the Docker setup:
+
+```bash
+# Just stop running containers (data persists)
+docker compose stop
+# Or
+make stop
+
+# Stop and remove containers (volumes/data persist)
+docker compose down
+
+# Remove image but keep wallets and data
+docker compose down --rmi all
+# Or
+make clean-image
+
+# Complete cleanup: remove containers, images, volumes, and all data
+docker compose down --rmi all --volumes --remove-orphans
+# Or
+make clean
+```
+
+**Cleanup comparison:**
+
+| Action | Command | Image | Wallets | Outputs | Containers |
+|--------|---------|-------|---------|---------|------------|
+| **Stop** | `make stop` | ✅ Keep | ✅ Keep | ✅ Keep | ⏸️ Stop |
+| **Clean wallets** | `make clean-wallets` | ✅ Keep | ❌ Remove | ✅ Keep | 🗑️ Remove |
+| **Clean image** | `make clean-image` | ❌ Remove | ✅ Keep | ✅ Keep | 🗑️ Remove |
+| **Clean all** | `make clean` | ❌ Remove | ❌ Remove | ❌ Remove | 🗑️ Remove |
+
+To verify everything is removed:
+
+```bash
+# Check images
+docker images | grep evvm
+
+# Check volumes  
+docker volume ls | grep evvm-docker
+
+# Check containers
+docker ps -a | grep evvm
+```
+
+### Remove wallets and start fresh
+
+If you need to delete imported wallets:
+
+```bash
+# Remove the wallet volume
+docker volume rm evvm-docker_foundry-keystores
+
+# Or remove all data (wallets + outputs)
+docker compose down --volumes
+```
+
+Then reimport your wallet as described in [Working with Wallets](#-working-with-wallets).
 
 ### Docker not running
 
@@ -330,7 +401,7 @@ curl -X POST -H "Content-Type: application/json" \
   YOUR_RPC_URL
 ```
 
-- Use `network_mode: host` in docker-compose.yml if accessing local nodes
+- Use `network_mode: host` in compose.yml if accessing local nodes
 
 ### Update repository
 
@@ -338,14 +409,14 @@ The repository is cloned during build. To update:
 
 ```bash
 # Rebuild the image without cache
-docker-compose down --rmi all --volumes
-docker-compose build --no-cache
+docker compose down --rmi all --volumes
+docker compose build --no-cache
 ```
 
 Or manually inside container:
 
 ```bash
-docker-compose run --rm evvm-cli /bin/bash
+docker compose run --rm --entrypoint /bin/bash evvm-cli
 git pull origin main
 git submodule update --init --recursive
 bun install
