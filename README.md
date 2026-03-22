@@ -1,6 +1,6 @@
 # EVVM Docker
 
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
+[![Docker Image](https://ghcr-badge.egpl.dev/evvm-org/evvm-docker/latest_tag?trim=major&label=ghcr.io&color=2496ED)](https://github.com/EVVM-org/evvm-docker/pkgs/container/evvm-docker)
 [![Foundry](https://img.shields.io/badge/Foundry-Included-FFDB1C?logo=foundry)](https://getfoundry.sh/)
 [![Bun](https://img.shields.io/badge/Bun-Included-000000?logo=bun)](https://bun.sh/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -42,11 +42,17 @@ nano .env
 
 ### 3. Build Docker Image
 
+You can either pull the pre-built image from GHCR or build it locally:
+
 ```bash
+# Option A: Pull pre-built image (faster)
+docker pull ghcr.io/evvm-org/evvm-docker:latest
+
+# Option B: Build locally
 docker compose build
 ```
 
-Or using Make:
+Or using Make (builds locally):
 
 ```bash
 make build
