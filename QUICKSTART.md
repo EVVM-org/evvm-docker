@@ -32,11 +32,25 @@ cp .env.example .env
 nano .env  # or use your preferred editor
 ```
 
-### 2. Build the Docker image
+### 2. Get the Docker image
 
 ```bash
-# Using Docker Compose (recommended)
+# Option A: Pull the pre-built image (recommended, no build time)
+docker pull ghcr.io/evvm-org/evvm-docker:latest
+
+# Option B: Build locally from source
 docker compose build
+```
+
+If you pulled the pre-built image, update `docker-compose.yml` to reference it instead of building:
+
+```yaml
+services:
+  evvm-cli:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    image: ghcr.io/evvm-org/evvm-docker:latest
 ```
 
 ### 3. Import your wallet
